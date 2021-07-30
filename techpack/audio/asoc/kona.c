@@ -7578,8 +7578,9 @@ static struct snd_soc_dai_link pri_mi2s_rx_tfa9874_dai_links[] = {
 	},
 #endif
 };
-#else //g7a
+#endif
 
+#ifdef CONFIG_BOARD_XIAOMI_SM7250
 static struct snd_soc_dai_link sec_mi2s_rx_tfa9874_be_dai_links[] = {
 	{
 		.name = LPASS_BE_SEC_MI2S_RX,
