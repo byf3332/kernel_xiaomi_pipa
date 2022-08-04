@@ -1755,3 +1755,7 @@ config MACH_XIAOMI_PIPA
 		Support for Mi PAD 6
 
 endmenu
+
+if ARCH_QCOM
+source "techpack/Kconfig"
+endif
