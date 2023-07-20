@@ -63,7 +63,6 @@ walt_dec_cfs_rq_stats(struct cfs_rq *cfs_rq, struct task_struct *p) {}
 
 unsigned int super_big_cpu = 7;
 
-#include <linux/kperfevents.h>
 #include <trace/events/kperfevents_sched.h>
 
 /*
@@ -1047,9 +1046,6 @@ update_stats_enqueue_sleeper(struct cfs_rq *cfs_rq, struct sched_entity *se)
 		if (tsk) {
 			account_scheduler_latency(tsk, delta >> 10, 1);
 			trace_sched_stat_sleep(tsk, delta);
-			if (unlikely(is_above_kperfevents_threshold_nanos(delta))) {
-				trace_kperfevents_sched_wait(tsk, delta, true);
-			}
 		}
 	}
 	if (block_start) {
@@ -1073,9 +1069,6 @@ update_stats_enqueue_sleeper(struct cfs_rq *cfs_rq, struct sched_entity *se)
 
 			trace_sched_stat_blocked(tsk, delta);
 			trace_sched_blocked_reason(tsk);
-			if (unlikely(is_above_kperfevents_threshold_nanos(delta))) {
-				trace_kperfevents_sched_wait(tsk, delta, false);
-			}
 
 			/*
 			 * Blocking time is in units of nanosecs, so shift by
