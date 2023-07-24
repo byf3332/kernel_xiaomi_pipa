@@ -138,3 +138,5 @@ kernel/configs/android-*.cfg
 #buildscript
 build.sh
 
+kernel-modules.sh
+kernel-modules
