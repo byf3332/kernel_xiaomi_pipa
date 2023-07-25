@@ -225,6 +225,7 @@ enum socinfo_parttype {
 
 #define SMEM_IMAGE_VERSION_TABLE	469
 #define SMEM_HW_SW_BUILD_ID		137
+#define SMEM_ID_VENDOR1                 135
 enum msm_cpu {
 	MSM_CPU_UNKNOWN = 0,
 	MSM_CPU_8960,
@@ -292,29 +293,47 @@ enum pmic_model {
 	PMIC_MODEL_UNKNOWN	= 0xFFFFFFFF
 };
 
-enum subset_part_type {
-	PART_UNKNOWN      = 0,
-	PART_GPU          = 1,
-	PART_VIDEO        = 2,
-	PART_CAMERA       = 3,
-	PART_DISPLAY      = 4,
-	PART_AUDIO        = 5,
-	PART_MODEM        = 6,
-	PART_WLAN         = 7,
-	PART_COMP         = 8,
-	PART_SENSORS      = 9,
-	PART_NPU          = 10,
-	PART_SPSS         = 11,
-	PART_NAV          = 12,
-	PART_COMP1        = 13,
-	PART_DISPLAY1     = 14,
-	NUM_PARTS_MAX,
-};
+#define HARDWARE_PLATFORM_UNKNOWN 0
+#define HARDWARE_PLATFORM_CMI  1
+#define HARDWARE_PLATFORM_UMI  2
+#define HARDWARE_PLATFORM_LMI  3
+#define HARDWARE_PLATFORM_CAS  7
+#define HARDWARE_PLATFORM_APOLLO  8
+#define HARDWARE_PLATFORM_ALIOTH  9
+#define HARDWARE_PLATFORM_THYME  10
+#define HARDWARE_PLATFORM_ENUMA  11
+#define HARDWARE_PLATFORM_ELISH  12
+#define HARDWARE_PLATFORM_PSYCHE  13
+#define HARDWARE_PLATFORM_MUNCH  15
+#define HARDWARE_PLATFORM_DAGU  16
+#define HARDWARE_PLATFORM_PIPA  4
 
-enum subset_cluster_type {
-	CLUSTER_CPUSS      = 0,
-	NUM_CLUSTERS_MAX,
-};
+#define HW_MAJOR_VERSION_B  9
+#define HW_MINOR_VERSION_B  1
+
+
+#define HW_MAJOR_VERSION_SHIFT 16
+#define HW_MAJOR_VERSION_MASK  0xFFFF0000
+#define HW_MINOR_VERSION_SHIFT 0
+#define HW_MINOR_VERSION_MASK  0x0000FFFF
+#define HW_COUNTRY_VERSION_MASK 0xFFF00000
+#define HW_COUNTRY_VERSION_SHIFT 20
+#define HW_BUILD_VERSION_MASK 0x000F0000
+#define HW_BUILD_VERSION_SHIFT 16
+
+typedef enum {
+  CountryCN = 0,
+  CountryGlobal = 1,
+  CountryIndia = 2,
+  INVALID,
+} CountryType;
+
+uint32_t get_hw_version_platform(void);
+uint32_t get_hw_country_version(void);
+uint32_t get_hw_version_major(void);
+uint32_t get_hw_version_minor(void);
+uint32_t get_hw_version_build(void);
+const char *product_name_get(void);
 
 enum msm_cpu socinfo_get_msm_cpu(void);
 uint32_t socinfo_get_id(void);
