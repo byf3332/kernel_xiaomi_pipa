@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2019, 2022, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/io.h>
@@ -21,7 +20,7 @@
 struct dentry *my_direc;
 const char delim[] = ",";
 int columns = NAME_COLUMN |
-BOUND_COLUMN | ERROR_CODES;
+	BOUND_COLUMN | STATE_COLUMN | ERROR_CODES;
 
 void populate_bound_rows(
 	struct synx_table_row *row,
@@ -62,6 +61,8 @@ static ssize_t synx_table_read(struct file *file,
 		cur += scnprintf(cur, end - cur, "|   Name   |");
 	if (columns & BOUND_COLUMN)
 		cur += scnprintf(cur, end - cur, "|   Bound   |");
+	if (columns & STATE_COLUMN)
+		cur += scnprintf(cur, end - cur, "|  Status  |");
 	cur += scnprintf(cur, end - cur, "\n");
 	for (i = 1; i < SYNX_MAX_OBJS; i++) {
 		row = &dev->synx_table[i];
@@ -88,7 +89,7 @@ static ssize_t synx_table_read(struct file *file,
 				cur,
 				end);
 		}
-		mutex_unlock(&dev->row_locks[index]);
+		mutex_unlock(&dev->row_locks[row->index]);
 		cur += scnprintf(cur, end - cur, "\n");
 	}
 	if (columns & ERROR_CODES && !list_empty(
