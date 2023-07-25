@@ -484,8 +484,7 @@ struct fastrpc_file {
 	/* To indicate attempt has been made to allocate memory for debug_buf */
 	int debug_buf_alloced_attempted;
 	/* Flag to indicate dynamic process creation status*/
-	enum fastrpc_process_create_state dsp_process_state;
-	struct completion shutdown;
+	bool in_process_create;
 };
 
 static struct fastrpc_apps gfa;
@@ -2505,6 +2504,7 @@ static int fastrpc_internal_invoke(struct fastrpc_file *fl, uint32_t mode,
 		goto bail;
 
 	VERIFY(err, 0 == (err = ctx->retval));
+
 	if (err)
 		goto bail;
  bail:
@@ -2636,13 +2636,13 @@ static int fastrpc_init_process(struct fastrpc_file *fl,
 		} inbuf;
 
 		spin_lock(&fl->hlock);
-		if (fl->dsp_process_state) {
+		if (fl->in_process_create) {
 			err = -EALREADY;
-			pr_err("Already in create init process\n");
+			pr_err("Already in create dynamic process\n");
 			spin_unlock(&fl->hlock);
 			return err;
 		}
-		fl->dsp_process_state = PROCESS_CREATE_IS_INPROGRESS;
+		fl->in_process_create = true;
 		spin_unlock(&fl->hlock);
 		inbuf.pgid = fl->tgid;
 		inbuf.namelen = strlen(current->comm) + 1;
@@ -2870,8 +2870,14 @@ bail:
 	} else {
 		fl->dsp_process_state = PROCESS_CREATE_SUCCESS;
 	}
-	if (locked) {
-		locked = 0;
+	if (file) {
+		mutex_lock(&fl->map_mutex);
+		fastrpc_mmap_free(file, 0);
+		mutex_unlock(&fl->map_mutex);
+	}
+	if (init->flags == FASTRPC_INIT_CREATE) {
+		spin_lock(&fl->hlock);
+		fl->in_process_create = false;
 		spin_unlock(&fl->hlock);
 	}
 	return err;
@@ -3456,18 +3462,20 @@ static int fastrpc_internal_munmap(struct fastrpc_file *fl,
 	mutex_unlock(&fl->map_mutex);
 	if (err)
 		goto bail;
-	VERIFY(err, map != NULL);
+  	VERIFY(err, map != NULL);
 	if (err) {
 		err = -EINVAL;
 		goto bail;
 	}
-	VERIFY(err, !fastrpc_munmap_on_dsp(fl, map->raddr,
-			map->phys, map->size, map->flags));
-	if (err)
-		goto bail;
-	mutex_lock(&fl->map_mutex);
-	fastrpc_mmap_free(map, 0);
-	mutex_unlock(&fl->map_mutex);
+	if (map) {
+		VERIFY(err, !fastrpc_munmap_on_dsp(fl, map->raddr,
+					map->phys, map->size, map->flags));
+		if (err)
+			goto bail;
+		mutex_lock(&fl->map_mutex);
+		fastrpc_mmap_free(map, 0);
+		mutex_unlock(&fl->map_mutex);
+	}
 bail:
 	if (err && map) {
 		mutex_lock(&fl->map_mutex);
@@ -3837,7 +3845,7 @@ static int fastrpc_file_free(struct fastrpc_file *fl)
 	}
 	spin_lock(&fl->hlock);
 	fl->file_close = 1;
-	fl->dsp_process_state = PROCESS_CREATE_DEFAULT;
+	fl->in_process_create = false;
 	spin_unlock(&fl->hlock);
 	if (!IS_ERR_OR_NULL(fl->init_mem))
 		fastrpc_buf_free(fl->init_mem, 0);
@@ -3876,6 +3884,7 @@ static int fastrpc_file_free(struct fastrpc_file *fl)
 	mutex_unlock(&fl->perf_mutex);
 	mutex_destroy(&fl->perf_mutex);
 	mutex_destroy(&fl->map_mutex);
+	mutex_destroy(&fl->pm_qos_mutex);
 	mutex_destroy(&fl->internal_map_mutex);
 	mutex_destroy(&fl->pm_qos_mutex);
 	kfree(fl);
@@ -4240,7 +4249,7 @@ static int fastrpc_device_open(struct inode *inode, struct file *filp)
 	fl->cid = -1;
 	fl->dev_minor = dev_minor;
 	fl->init_mem = NULL;
-	fl->dsp_process_state = PROCESS_CREATE_DEFAULT;
+	fl->in_process_create = false;
 	memset(&fl->perf, 0, sizeof(fl->perf));
 	fl->qos_request = 0;
 	fl->dsp_proc_init = 0;
@@ -4252,7 +4261,6 @@ static int fastrpc_device_open(struct inode *inode, struct file *filp)
 	spin_unlock(&me->hlock);
 	mutex_init(&fl->perf_mutex);
 	mutex_init(&fl->pm_qos_mutex);
-	init_completion(&fl->shutdown);
 	return 0;
 }
 
@@ -4373,6 +4381,7 @@ static int fastrpc_internal_control(struct fastrpc_file *fl,
 		VERIFY(err, latency != 0);
 		if (err)
 			goto bail;
+		mutex_lock(&fl->pm_qos_mutex);
 		cpumask_clear(&mask);
 		for (i = 0; i < len; i++)
 			cpumask_set_cpu(me->silvercores.coreno[i], &mask);
