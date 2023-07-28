@@ -293,6 +293,30 @@ enum pmic_model {
 	PMIC_MODEL_UNKNOWN	= 0xFFFFFFFF
 };
 
+enum subset_part_type {
+	PART_UNKNOWN      = 0,
+	PART_GPU          = 1,
+	PART_VIDEO        = 2,
+	PART_CAMERA       = 3,
+	PART_DISPLAY      = 4,
+	PART_AUDIO        = 5,
+	PART_MODEM        = 6,
+	PART_WLAN         = 7,
+	PART_COMP         = 8,
+	PART_SENSORS      = 9,
+	PART_NPU          = 10,
+	PART_SPSS         = 11,
+	PART_NAV          = 12,
+	PART_COMP1        = 13,
+	PART_DISPLAY1     = 14,
+	NUM_PARTS_MAX,
+};
+
+enum subset_cluster_type {
+	CLUSTER_CPUSS      = 0,
+	NUM_CLUSTERS_MAX,
+};
+
 #define HARDWARE_PLATFORM_UNKNOWN 0
 #define HARDWARE_PLATFORM_CMI  1
 #define HARDWARE_PLATFORM_UMI  2
