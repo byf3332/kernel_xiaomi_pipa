@@ -471,6 +471,8 @@ static uint32_t qseelog_buf_size;
 static phys_addr_t disp_buf_paddr;
 
 static uint64_t qseelog_shmbridge_handle;
+static struct encrypted_log_info enc_qseelog_info;
+static struct encrypted_log_info enc_tzlog_info;
 
 static struct proc_dir_entry *g_proc_dir;
 static struct proc_dir_entry *p_qsee_log_dump_handler;
@@ -789,6 +791,83 @@ static int _disp_log_stats(struct tzdbg_log_t *log,
 						debug_rw_buf_size);
 
 	}
+	}
+
+	max_len = (count > debug_rw_buf_size) ? debug_rw_buf_size : count;
+
+	pr_debug("diag_buf wrap = %u, offset = %u\n",
+		log->log_pos.wrap, log->log_pos.offset);
+
+	/*
+	 *  Read from ring buff while there is data and space in return buff
+	 */
+	while ((log_start->offset != log->log_pos.offset) && (len < max_len)) {
+		tzdbg.disp_buf[i++] = log->log_buf[log_start->offset];
+		log_start->offset = (log_start->offset + 1) % log_len;
+		if (log_start->offset == 0)
+			++log_start->wrap;
+		++len;
+	}
+
+	/*
+	 * return buffer to caller
+	 */
+	tzdbg.stat[buf_idx].data = tzdbg.disp_buf;
+	return len;
+}
+
+static int _disp_log_stats_v2(struct tzdbg_log_v2_t *log,
+			      struct tzdbg_log_pos_v2_t *log_start,
+			      uint32_t log_len, size_t count,
+			      uint32_t buf_idx)
+{
+	uint32_t wrap_start;
+	uint32_t wrap_end;
+	uint32_t wrap_cnt;
+	int max_len;
+	int len = 0;
+	int i = 0;
+
+	wrap_start = log_start->wrap;
+	wrap_end = log->log_pos.wrap;
+
+	/* Calculate difference in # of buffer wrap-arounds */
+	if (wrap_end >= wrap_start) {
+		wrap_cnt = wrap_end - wrap_start;
+	} else {
+		/* wrap counter has wrapped around, invalidate start position */
+		wrap_cnt = 2;
+	}
+
+	if (wrap_cnt > 1) {
+		/* end position has wrapped around more than once, */
+		/* current start no longer valid                   */
+		log_start->wrap = log->log_pos.wrap - 1;
+		log_start->offset = (log->log_pos.offset + 1) % log_len;
+	} else if ((wrap_cnt == 1) &&
+		(log->log_pos.offset > log_start->offset)) {
+		/* end position has overwritten start */
+		log_start->offset = (log->log_pos.offset + 1) % log_len;
+	}
+	pr_debug("diag_buf wrap = %u, offset = %u\n",
+		log->log_pos.wrap, log->log_pos.offset);
+
+	while (log_start->offset == log->log_pos.offset) {
+		/*
+		 * No data in ring buffer,
+		 * so we'll hang around until something happens
+		 */
+		unsigned long t = msleep_interruptible(50);
+
+		if (t != 0) {
+			/* Some event woke us up, so let's quit */
+			return 0;
+		}
+
+		if (buf_idx == TZDBG_LOG)
+			memcpy_fromio((void *)tzdbg.diag_buf, tzdbg.virt_iobase,
+						debug_rw_buf_size);
+
 	}
 
 	max_len = (count > debug_rw_buf_size) ? debug_rw_buf_size : count;
