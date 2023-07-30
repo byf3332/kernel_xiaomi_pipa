@@ -2851,25 +2851,12 @@ bail:
 		fastrpc_mmap_free(mem, 0);
 		mutex_unlock(&fl->map_mutex);
 	}
-	if (file) {
-		mutex_lock(&fl->map_mutex);
-		fastrpc_mmap_free(file, 0);
-		mutex_unlock(&fl->map_mutex);
-	}
-	spin_lock(&fl->hlock);
-	locked = 1;
 	if (err) {
-		fl->dsp_process_state = PROCESS_CREATE_DEFAULT;
 		if (!IS_ERR_OR_NULL(fl->init_mem)) {
-			init_mem = fl->init_mem;
+			fastrpc_buf_free(fl->init_mem, 0);
 			fl->init_mem = NULL;
-			locked = 0;
-			spin_unlock(&fl->hlock);
-			fastrpc_buf_free(init_mem, 0);
 		}
-	} else {
-		fl->dsp_process_state = PROCESS_CREATE_SUCCESS;
-	}
+	} 
 	if (file) {
 		mutex_lock(&fl->map_mutex);
 		fastrpc_mmap_free(file, 0);
@@ -3067,10 +3054,8 @@ static int fastrpc_release_current_dsp_process(struct fastrpc_file *fl)
 	if (err)
 		goto bail;
 	VERIFY(err, fl->apps->channel[cid].issubsystemup == 1);
-	if (err) {
-		wait_for_completion(&fl->shutdown);
+	if (err) 
 		goto bail;
-	}
 	tgid = fl->tgid;
 	ra[0].buf.pv = (void *)&tgid;
 	ra[0].buf.len = sizeof(tgid);
@@ -4789,16 +4774,6 @@ static int fastrpc_restart_notifier_cb(struct notifier_block *nb,
 		ctx->ssrcount++;
 		ctx->issubsystemup = 0;
 		mutex_unlock(&me->channel[cid].smd_mutex);
-	} else if (code == SUBSYS_AFTER_SHUTDOWN) {
-		pr_info("adsprpc: %s: %s subsystem is down\n",
-			__func__, gcinfo[cid].subsys);
-		spin_lock(&me->hlock);
-		hlist_for_each_entry_safe(fl, n, &me->drivers, hn) {
-			if (fl->cid != cid)
-				continue;
-			complete(&fl->shutdown);
-		}
-		spin_unlock(&me->hlock);
 	} else if (code == SUBSYS_RAMDUMP_NOTIFICATION) {
 		if (cid == RH_CID) {
 			if (me->ramdump_handle)
