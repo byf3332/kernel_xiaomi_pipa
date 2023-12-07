@@ -336,6 +336,8 @@ struct binder_proc {
 	int tmp_ref;
 	struct binder_priority default_priority;
 	struct dentry *debugfs_entry;
+	struct dentry *debugfs_transaction_entry;
+	struct dentry *binderfs_transaction_entry;
 	struct binder_alloc alloc;
 	struct binder_context *context;
 	spinlock_t inner_lock;
@@ -412,6 +414,9 @@ struct binder_transaction {
 	int debug_id;
 	struct binder_work work;
 	struct binder_thread *from;
+	int async_from_pid;
+	int async_from_tid;
+	u64 timesRecord;
 	struct binder_transaction *from_parent;
 	struct binder_proc *to_proc;
 	struct binder_thread *to_thread;
@@ -2994,8 +2999,8 @@ static void binder_transaction(struct binder_proc *proc,
 			millet_sendmsg(BINDER_TYPE, target_proc->tsk, &data);
 		}
 #endif
-		if (security_binder_transaction(proc->tsk,
-						target_proc->tsk) < 0) {
+		if (security_binder_transaction(proc->cred,
+										target_proc->cred) < 0) {
 			return_error = BR_FAILED_REPLY;
 			return_error_param = -EPERM;
 			return_error_line = __LINE__;
