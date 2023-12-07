@@ -266,8 +266,8 @@ static const struct file_operations pm_qos_debug_fops = {
 	.release        = single_release,
 };
 
-static inline void pm_qos_set_value_for_cpus(struct pm_qos_constraints *c,
-					     bool dev_req)
+static inline int pm_qos_set_value_for_cpus(struct pm_qos_constraints *c,
+					     bool dev_req , struct cpumask *cpus)
 {
 	struct pm_qos_request *req = NULL;
 	int cpu;
@@ -362,7 +362,7 @@ int pm_qos_update_target(struct pm_qos_constraints *c, struct plist_node *node,
 	curr_value = pm_qos_get_value(c);
 	cpumask_clear(&cpus);
 	pm_qos_set_value(c, curr_value);
-	pm_qos_set_value_for_cpus(c, dev_req);
+	ret = pm_qos_set_value_for_cpus(c, dev_req, &cpus);
 
 	spin_unlock_irqrestore(&pm_qos_lock, flags);
 
