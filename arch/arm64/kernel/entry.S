@@ -1084,7 +1084,7 @@ alternative_endif
 	.if	\regsize == 64
 	mrs	x29, far_el1
 	.endif
-	add	sp, sp, #S_FRAME_SIZE   //restore sp
+	add	sp, sp, #S_FRAME_SIZE		// restore sp
 	eret
 	.endm
 
