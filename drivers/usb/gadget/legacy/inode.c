@@ -361,7 +361,6 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
 				spin_unlock_irq (&epdata->dev->lock);
 
 				DBG (epdata->dev, "endpoint gone\n");
-				wait_for_completion(&done);
 				epdata->status = -ENODEV;
 			}
 		}
@@ -2059,9 +2058,6 @@ gadgetfs_fill_super (struct super_block *sb, void *opts, int silent)
 	return 0;
 
 Enomem:
-	kfree(CHIP);
-	CHIP = NULL;
-
 	return -ENOMEM;
 }
 
