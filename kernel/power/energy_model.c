@@ -131,18 +131,7 @@ static struct em_perf_domain *em_create_pd(cpumask_t *span, int nr_states,
 
 		table[i].power = power;
 		table[i].frequency = prev_freq = freq;
-
-		/*
-		 * The hertz/watts efficiency ratio should decrease as the
-		 * frequency grows on sane platforms. But this isn't always
-		 * true in practice so warn the user if a higher OPP is more
-		 * power efficient than a lower one.
-		 */
-		opp_eff = freq / power;
-		if (opp_eff >= prev_opp_eff)
-			pr_debug("pd%d: hertz/watts ratio non-monotonically decreasing: em_cap_state %d >= em_cap_state%d\n",
-					cpu, i, i - 1);
-		prev_opp_eff = opp_eff;
+		
 	}
 
 	/* Compute the cost of each capacity_state. */

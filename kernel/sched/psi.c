@@ -1296,8 +1296,9 @@ __poll_t psi_trigger_poll(void **trigger_ptr,
 
 	if (cmpxchg(&t->event, 1, 0) == 1) {
 		ret |= EPOLLPRI;
-
-	kref_put(&t->refcount, psi_trigger_destroy);
+		if (!strcmp(t->comm, ULMK_MAGIC))
+			ulmk_watchdog_pet(&t->wdog_timer);
+	}
 
 	return ret;
 }

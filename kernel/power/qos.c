@@ -284,7 +284,7 @@ static inline int pm_qos_set_value_for_cpus(struct pm_qos_constraints *c,
 	 * can safely skip updating target_per_cpu for device requests.
 	 */
 	if (dev_req)
-		return;
+		return 0;
 
 	plist_for_each_entry(req, &c->list, node) {
 		for_each_cpu(cpu, &req->cpus_affine) {
