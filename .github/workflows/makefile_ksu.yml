@@ -1,0 +1,31 @@
+# A simple action usage
+name: Build Kernel (ksu)
+on:
+  workflow_dispatch:
+
+jobs:
+  Build-Kernel:
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Build Kernel
+      uses: dabao1955/kernel_build_action@main
+      with:
+          kernel-url: https://github.com/byf3332/kernel_xiaomi_pipa
+          kernel-dir: msm-4.19
+          kernel-branch: a13-xiaomisource
+          config: pipa_user_defconfig
+          arch: arm64
+          aosp-gcc: true
+          aosp-clang: true
+          ksu: true
+          ksu-version: main
+          android-version: 12
+          aosp-clang-version: r383902
+          python-27: true
+          disable-lto: true
+          anykernel3: true
