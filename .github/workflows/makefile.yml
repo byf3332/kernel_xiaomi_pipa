@@ -15,15 +15,15 @@ jobs:
     - name: Build Kernel
       uses: dabao1955/kernel_build_action@main
       with:
-          kernel-url: https://github.com/byf3332/android_kernel_xiaomi_pipa
+          kernel-url: https://github.com/byf3332/kernel_xiaomi_pipa
           kernel-dir: msm-4.19
           kernel-branch: master
-          config: pipa_defconfig
+          config: pipa_user_defconfig
           arch: arm64
           aosp-gcc: true
           aosp-clang: true
-          ksu: true
-          ksu-version: main
+          # ksu: true
+          # ksu-version: main
           android-version: 12
           aosp-clang-version: r383902
           python-27: true
