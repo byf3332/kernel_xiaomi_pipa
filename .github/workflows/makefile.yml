@@ -17,7 +17,7 @@ jobs:
       with:
           kernel-url: https://github.com/byf3332/kernel_xiaomi_pipa
           kernel-dir: msm-4.19
-          kernel-branch: master
+          kernel-branch: a13-xiaomisource
           config: pipa_user_defconfig
           arch: arm64
           aosp-gcc: true
