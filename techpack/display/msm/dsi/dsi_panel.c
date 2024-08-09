@@ -1151,8 +1151,8 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 				"qcom,mdss-dsi-panel-framerate",
 				&mode->refresh_rate);
 	
-	//HACK: fix CPHY/DualDSI issue
-    mode->refresh_rate = 104;
+  //HACK: fix CPHY/DualDSI issue
+  mode->refresh_rate = 104;
 	
 	if (rc) {
 		DSI_ERR("failed to read qcom,mdss-dsi-panel-framerate, rc=%d\n",
@@ -1775,7 +1775,11 @@ static int dsi_panel_parse_dfps_caps(struct dsi_panel *panel)
 	const char *name = panel->name;
 	const char *type;
 	u32 i;
-
+	
+    //HACK: fix CPHY/DualDSI issue
+    dfps_caps->dfps_support = false;
+    return rc;
+	
 	supported = utils->read_bool(utils->data,
 			"qcom,mdss-dsi-pan-enable-dynamic-fps");
 
