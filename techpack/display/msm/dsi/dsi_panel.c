@@ -1150,6 +1150,10 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 	rc = utils->read_u32(utils->data,
 				"qcom,mdss-dsi-panel-framerate",
 				&mode->refresh_rate);
+	
+	//HACK: fix CPHY/DualDSI issue
+    mode->refresh_rate = 104;
+	
 	if (rc) {
 		DSI_ERR("failed to read qcom,mdss-dsi-panel-framerate, rc=%d\n",
 		       rc);
